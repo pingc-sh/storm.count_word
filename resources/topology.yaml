@@ -1,0 +1,34 @@
+name: "count_word"
+
+config:
+  topology.workers: 2
+  topology.component.resources.onheap.memory.mb: 128
+
+spouts:
+  - id: "word-spout"
+    className: "org.apache.storm.flux.wrappers.spouts.FluxShellSpout"
+    constructorArgs:
+      # Command line
+      - ["python3", "wordspout.py"]
+      # Output field(s)
+      - ["word"]
+    parallelism: 1
+
+bolts:
+  - id: "counter-bolt"
+    className: "org.apache.storm.flux.wrappers.bolts.FluxShellBolt"
+    constructorArgs:
+      # Command line
+      - ["python3", "countbolt.py"]
+      # Output field(s)
+      - ["word","count"]
+    parallelism: 1
+
+
+streams:
+  - name: "Spout --> Counter"
+    from: "word-spout"
+    to: "counter-bolt"
+    grouping:
+      type: FIELDS
+      args: ["word"]
